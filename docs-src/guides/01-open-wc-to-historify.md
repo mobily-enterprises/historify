@@ -13,7 +13,7 @@ Then, don't forget to install historify.js:
 (NOTE: we are not yet sure we have access to the `historify` domain in NPM)
 
 ````
-npm install historify
+npm install --save historify
 ````
 
 ## Changes to RoutingApp.js
