@@ -27,8 +27,8 @@ export function go (path, state = {}) {
 
 export function teleport (path, state = {}) {
   history[history.length - 1] = path
-  window.history.replaceState({}, '', path)
   state = { ...state, noHistory: true }
+  window.history.replaceState(state, '', path)
   emitArtificialPopstate(state)
 }
 
@@ -36,8 +36,9 @@ export function back (state = {}) {
   if (history.length > 1) {
     history.pop()
     const path = history[history.length - 1]
-    window.history.replaceState(state, '', path)
     state = { ...state, noHistory: true }
+    window.history.replaceState(state, '', path)
+    emitArtificialPopstate(state)
   }
 }
 
@@ -46,10 +47,16 @@ export function getHistory () {
 }
 
 // This is the default navigate action
-async function popStateCallback (path, e) {
+async function popStateCallback (location, e) {
+  const path = decodeURIComponent(location.pathname) + location.hash
+
+  console.log('BEFORE:', history)
   if (navigatePreprocessor) {
     const allClear = await navigatePreprocessor(path, e)
-    if (!allClear) return
+    if (!allClear) {
+      console.log('DERAILED')
+      return
+    }
   }
 
   // Push the new page in the artificial history
@@ -62,4 +69,5 @@ async function popStateCallback (path, e) {
     const where = history.indexOf(path)
     if (where !== -1) history = history.slice(0, where + 1)
   }
+  console.log('AFTER:', history)
 }
