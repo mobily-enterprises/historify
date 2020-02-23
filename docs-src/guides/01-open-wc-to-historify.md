@@ -8,6 +8,14 @@ The aim of this guide is to add navigation ability (e.g. a back button and a "go
 
 So, first of all  make sure that you have a working version of the routing-app from that guide.
 
+Then, don't forget to install historify.js:
+
+(NOTE: we are not yet sure we have access to the `historify` domain in NPM)
+
+````
+npm install historify
+````
+
 ## Changes to RoutingApp.js
 
 The changes needed to `RoutingApp.js` are surprisingly simple.
