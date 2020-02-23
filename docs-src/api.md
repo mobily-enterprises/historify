@@ -1,11 +1,10 @@
 # historify.js API
 
 
-**historifySetup (navigateProcessor)**
+**historifySetup (navigatePostprocessor, excludeHashes)**
 
 It sets up the listener for the browser's popState event (which happens when the browser's history changes). The listener is responsible of adding an entry to a local copy of the history.
-You can pass an async `navigateProcessor` function as parameter, which will be called before adding the entry to the history. If the `navigateProcessor` function returns false, it's assumed that navigation was derailed and nothing is added to the history.
-
+You can pass an async `navigatePostprocessor` function as parameter, which will be called at every `popstate` event; this is useful to run some checks on the URL requested, and to do dynamic loading of components (if necessaru).
 
 Example of usage:
 
@@ -14,38 +13,37 @@ import { historifySetup, teleport } from 'historify/historify.js'
 
 // ...
 
-async function navigateProcessor () {
- const userInfo = window.userInfo
+async function navigatePostprocessor () {
+  const userInfo = window.userInfo
 
- if (userInfo.loggedIn) {
-   if (path === '/') {
-     teleport('/dashboard')
-     return false
-   }
- } else {
-   if (path !== '/login') {
-     teleport('/login')
-     return false
-   }
- }
+  if (userInfo.loggedIn) {
+     if (path === '/') {
+       teleport('/dashboard')
+       return
+     }
+  } else {
+    if (path !== '/login') {
+      teleport('/login')
+      return
+    }
+  }
 
- // Work out the page to load, and attempt to load it
- const cleanPath = path.split(/[#?/]/)[1]
- const mod = await importModuleForPath(cleanPath)
- if (!mod) {
-   teleport('/view404')
-   return false
- }
-
- // All clear: historify will add entry to the history
- return true
+  // Work out the page to load, and attempt to load it
+  const cleanPath = path.split(/[#?/]/)[1]
+  const mod = await importModuleForPath(cleanPath)
+  if (!mod) {
+    teleport('/view404')
+    return
+  }
 }
 
-historifySetup(navigateProcessor)
+historifySetup(navigatePostprocessor)
 
 ````
 
 You can see that an attempt to navigate to `/` will be derailed to the dashboard (if the user is logged in) or to the login page (if the user is not logged in). Also, dynamic module loading is implemented, working out the name of the module from the URL.
+
+If `excludeHashes` is passed, then two locations with the same paths but different hashes will be considered the same path. The practical consequence is that pressing `back` on the application button will not cycle through visited hashes within the same path.
 
 **go (path, state = {})**
 

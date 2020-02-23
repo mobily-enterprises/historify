@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+
+<html>
+<head>
+  <title>Using historify.js on an open-wc project</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="../tpe.css" />
+</head>
+<body>
+  <div class="container">
+      <div class="header">
+        <div class="topbar">
+          <div id="logo" alt="TPE">
+          </div>
+          <h3>Using historify.js on an open-wc project</h3>
+          <!-- <img id="logo" src="/images/TPE_logo_white.png" height="60px" alt="TPE" > -->
+          <div class="links">
+            <a href="https://github.com/mobily-enterprises/routify" target="_blank" title="View on GitHub">
+              <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub icon</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+      <div class="main">
+        
+          <div class="toc">
+            <ul>
+              
+                
+                
+                  <li>
+                      <a class="source " href="../index.html">
+                          index
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
+                      <a class="source " href="../api.html">
+                          api
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
+                      <a class="source  current " href="../guides.html">
+                          guides
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
+                      <a class="source  indented  current " href="01-open-wc-to-historify.html">
+                          01 open wc to historify
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
+                      <a class="source " href="../historify.html">
+                          historify.js
+                      </a>
+                  </li>
+                
+              
+            </ul>
+          </div>
+        
+        <div class="contentPage">
+          
+            
+            <p>In order to use historify, you need to have a single page application (SPA) that manages routing.</p>
+<p>This guide assumes that you have the end result of the guide <a href="https://mobily-enterprises.github.io/routify/guides/02-open-wc-to-routify.html">Standard open-wc project to a routing-aware app in 6 steps</a>, which will get you to the point of having a one-page application.</p>
+<p>The aim of this guide is to add navigation ability (e.g. a back button and a “go to” button) to that example.</p>
+<p>So, first of all  make sure that you have a working version of the routing-app from that guide.</p>
+<h2 id="changes-to-routingappjs">Changes to RoutingApp.js</h2>
+
+            
+          
+            
+            <p>The changes needed to <code>RoutingApp.js</code> are surprisingly simple.</p>
+<p>First of all, import historify:</p>
+<pre><code>import { go, back, teleport, historifySetup } from &#39;historify/historify.js&#39;</code></pre><p>Then, add the buttons just under the <code>&lt;header&gt;</code> elememnt:</p>
+<pre><code><span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">button</span> @<span class="hljs-attr">click</span>=<span class="hljs-string">"${this._back}"</span>&gt;</span></span>BACK<span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span></span>
+<span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">button</span> @<span class="hljs-attr">click</span>=<span class="hljs-string">"${this._goAbout}"</span>&gt;</span></span>ABOUT (go)<span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span></span>
+<span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">button</span> @<span class="hljs-attr">click</span>=<span class="hljs-string">"${this._teleportAbout}"</span>&gt;</span></span>ABOUT (teleport)<span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span></span></code></pre><p>Finally, implement the calls attached to the <code>@click</code> events for those buttons:</p>
+<pre><code>_back () {
+  back()
+}
+
+_goAbout () {
+  go(&#39;/page-about&#39;)
+}
+
+_teleportAbout () {
+  teleport(&#39;/page-about&#39;)
+}</code></pre><p>You are done: reload the application, and see how you can now press <code>back</code>. Also notice how the <code>ABOUT</code> buttons are different: the “go” version will make sure that the history is maintained. The “teleport” version will simply swap the current page.</p>
+<p>Finally, notice how the back and forward buttons of the browser are fully functional, even if you keep them pressed and use them to just to random pages in the application.</p>
+<p>Navigation nirvana!</p>
+
+            
+          
+        </div>
+      </div>
+    </div>
+    <div class="bottombar">
+
+    </div>
+  </div>
+</body>
+</html>

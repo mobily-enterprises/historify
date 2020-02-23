@@ -8,6 +8,8 @@ echo "historify.com" > ../docs/CNAME
        	-o ../docs\
        	index.md\
        	api.md\
+        guides.md\
+        guides/*\
         historify.js
 cp -r ./images ../docs/
 # cp --parents -pr guides/*/* ../docs

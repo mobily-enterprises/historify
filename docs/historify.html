@@ -50,6 +50,24 @@
                 
                 
                   <li>
+                      <a class="source " href="guides.html">
+                          guides
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
+                      <a class="source  indented " href="guides/01-open-wc-to-historify.html">
+                          01 open wc to historify
+                      </a>
+                  </li>
+                
+              
+                
+                
+                  <li>
                       <a class="source  current " href="historify.html">
                           historify.js
                       </a>
@@ -64,78 +82,130 @@
             
             <p>historify.js is a simple set of functions that facilitate history management
 for single page applications.</p>
+<p>The module works by keeping an artificial copy of the history, and making
+sure that the browser’s history and the artificial history are as in sync
+as possible.</p>
+<p>The default variables are set at the beginning of the module:</p>
 
             
               <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> history = []
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> navigatePreprocessor = <span class="hljs-literal">null</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> navigatePostprocessor = <span class="hljs-literal">null</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> excludeHashes = <span class="hljs-literal">false</span></pre></div>
+            
+          
+            
+            <p>In order for historify to work, it needs to be set up and it needs to listen
+to popstate events (which will indicate a change of path).
+This is done through the function <code>historifySetup()</code>, which is passed a
+navigatePostprocessor function called every time the browser location changes.</p>
 
-<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">historifySetup</span> (<span class="hljs-params">func = null</span>) </span>{
-  navigatePreprocessor = func
+            
+              <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">historifySetup</span> (<span class="hljs-params">_navigatePostprocessor = null, _excludeHashes = false</span>) </span>{
+  navigatePostprocessor = _navigatePostprocessor
+  excludeHashes = _excludeHashes
 
   <span class="hljs-built_in">window</span>.addEventListener(<span class="hljs-string">'popstate'</span>, e =&gt; popStateCallback(<span class="hljs-built_in">window</span>.location, e))
   popStateCallback(<span class="hljs-built_in">window</span>.location, <span class="hljs-literal">null</span>)
-}
+}</pre></div>
+            
+          
+            
+            <p>Since changing the location with <code>pushState</code> and <code>replaceState</code> doesn’t trigger
+<code>popstate</code>, the module will emit its own artificial one. The state
+is marked as <code>{ artificial: true }</code> – this will have implication later
+when the history is manipulated</p>
 
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">emitArtificialPopstate</span> (<span class="hljs-params">state</span>) </span>{
+            
+              <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">emitArtificialPopstate</span> (<span class="hljs-params">state</span>) </span>{
   state = { ...state, <span class="hljs-attr">artificial</span>: <span class="hljs-literal">true</span> }
   <span class="hljs-keyword">const</span> e = <span class="hljs-keyword">new</span> PopStateEvent(<span class="hljs-string">'popstate'</span>, { state })
   <span class="hljs-built_in">window</span>.dispatchEvent(e)
-}
+}</pre></div>
+            
+          
+            
+            <p>It’s time to implement the actual navigation methods.
+<code>go() will go to a URL by using pushState() and emitting the artificial</code>popstate` event.</p>
 
-<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">go</span> (<span class="hljs-params">path, state = {}</span>) </span>{
+            
+              <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">go</span> (<span class="hljs-params">path, state = {}</span>) </span>{
   <span class="hljs-built_in">window</span>.history.pushState(state, <span class="hljs-string">''</span>, path)
   emitArtificialPopstate(state)
-}
+}</pre></div>
+            
+          
+            
+            <p>The <code>teleport()</code> method is similar to <code>go()</code>, except that it doesn’t affect the
+history. For the browser’s history, this is a natural consequence of using
+<code>replaceState()</code>. For the module itself, the last entry in the history is
+modified, <em>and</em> the artificual <code>popstate</code> event is generated with the
+property <code>noHistory</code> set to <code>true</code>, which will prevent the module from
+adding the entry in the history</p>
 
-<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">teleport</span> (<span class="hljs-params">path, state = {}</span>) </span>{
+            
+              <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">teleport</span> (<span class="hljs-params">path, state = {}</span>) </span>{
   history[history.length - <span class="hljs-number">1</span>] = path
-  <span class="hljs-built_in">window</span>.history.replaceState({}, <span class="hljs-string">''</span>, path)
   state = { ...state, <span class="hljs-attr">noHistory</span>: <span class="hljs-literal">true</span> }
+  <span class="hljs-built_in">window</span>.history.replaceState(state, <span class="hljs-string">''</span>, path)
   emitArtificialPopstate(state)
-}
+}</pre></div>
+            
+          
+            
+            <p>The back button works as expected: if there are entries in the history,
+the browser’s <code>back()</code> method is called, and the artificial history is then
+shortened by 1.
+Note that there is no need to emit an artificial <code>popstate</code> event, since
+<code>history.back()</code> will emit a real one</p>
 
-<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">back</span> (<span class="hljs-params">state = {}</span>) </span>{
+            
+              <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">back</span> (<span class="hljs-params">state = {}</span>) </span>{
   <span class="hljs-keyword">if</span> (history.length &gt; <span class="hljs-number">1</span>) {
     history.pop()
-    <span class="hljs-keyword">const</span> path = history[history.length - <span class="hljs-number">1</span>]
-    <span class="hljs-built_in">window</span>.history.replaceState(state, <span class="hljs-string">''</span>, path)
-    state = { ...state, <span class="hljs-attr">noHistory</span>: <span class="hljs-literal">true</span> }
+    <span class="hljs-built_in">window</span>.history.back()
   }
-}
+}</pre></div>
+            
+          
+            
+            <p>The history is made available to the external world</p>
 
-<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getHistory</span> (<span class="hljs-params"></span>) </span>{
+            
+              <div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getHistory</span> (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">return</span> history
 }</pre></div>
             
           
             
-            <p>This is the default navigate action</p>
+            <p>When the location changes, the <code>popstate</code> event is emitted. This might happen
+either organically, coming from the browser, or artificially by calling
+<code>emitArtificialPopstate()</code>.</p>
+<p>This is where the new URL is actually added to the history (unless the
+<code>noHistory</code> property is set in the event, as it happens in <code>teleport()</code>).</p>
+<p>If an event isn’t marked as <code>artificial</code>, it means that the user has clicked
+on one of the forward/back buttons on the browser, or has clicked on
+a link.</p>
+<p>If the event is not artificial, then the module will make sure that the
+artificial history is properly in sync with the browser’s history, by
+truncating the artificial history to the latest matching entry.</p>
 
             
-              <div class='highlight'><pre><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">popStateCallback</span> (<span class="hljs-params">path, e</span>) </span>{
-  <span class="hljs-keyword">if</span> (navigatePreprocessor) {
-    <span class="hljs-keyword">const</span> allClear = <span class="hljs-keyword">await</span> navigatePreprocessor(path, e)
-    <span class="hljs-keyword">if</span> (!allClear) <span class="hljs-keyword">return</span>
-  }</pre></div>
-            
-          
-            
-            <p>Push the new page in the artificial history
-(unless noHistory was in the popstate state)</p>
+              <div class='highlight'><pre><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">popStateCallback</span> (<span class="hljs-params">location, e</span>) </span>{
+  <span class="hljs-keyword">const</span> path = <span class="hljs-built_in">decodeURIComponent</span>(location.pathname) + (excludeHashes ? <span class="hljs-string">''</span> : location.hash)
 
-            
-              <div class='highlight'><pre>  <span class="hljs-keyword">if</span> (!e || !e.state || !e.state.noHistory) history.push(path)</pre></div>
-            
-          
-            
-            <p>For PURE browser popstate event (different to the artificial ones emitted with
-status set as { artificial: true }, reset the artificial history to this page</p>
+  <span class="hljs-comment">/* Push the new page in the artificial history */</span>
+  <span class="hljs-comment">/* (unless noHistory was in the popstate state) */</span>
+  <span class="hljs-keyword">if</span> (!e || !e.state || !e.state.noHistory) history.push(path)
 
-            
-              <div class='highlight'><pre>  <span class="hljs-keyword">if</span> (e &amp;&amp; e.type === <span class="hljs-string">'popstate'</span> &amp;&amp; e.state &amp;&amp; !e.state.artificial) {
-    <span class="hljs-keyword">const</span> where = history.indexOf(path)
+  <span class="hljs-comment">/* For PURE browser popstate event (different to the artificial ones emitted with */</span>
+  <span class="hljs-comment">/* status set as { artificial: true }, reset the artificial history to this page */</span>
+  <span class="hljs-keyword">if</span> (e &amp;&amp; e.type === <span class="hljs-string">'popstate'</span> &amp;&amp; (!e.state || !e.state.artificial)) {
+  <span class="hljs-comment">/* if (e &amp;&amp; e.type === 'popstate' &amp;&amp; e.state &amp;&amp; !e.state.artificial) { */</span>
+    <span class="hljs-keyword">const</span> where = history.lastIndexOf(path)
     <span class="hljs-keyword">if</span> (where !== <span class="hljs-number">-1</span>) history = history.slice(<span class="hljs-number">0</span>, where + <span class="hljs-number">1</span>)
   }
+
+  <span class="hljs-keyword">if</span> (navigatePostprocessor) <span class="hljs-keyword">await</span> navigatePostprocessor(path, e)
 }</pre></div>
             
           
