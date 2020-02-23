@@ -10,8 +10,6 @@ So, first of all  make sure that you have a working version of the routing-app f
 
 Then, don't forget to install historify.js:
 
-(NOTE: we are not yet sure we have access to the `historify` domain in NPM)
-
 ````
 npm install --save historify
 ````
