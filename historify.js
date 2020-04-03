@@ -11,7 +11,6 @@
 // The default variables are set at the beginning of the module:
 
 export let history = []
-export let navigatePostprocessor = null
 export let excludeHashes = false
 
 // In order for historify to work, it needs to be set up and it needs to listen
@@ -19,8 +18,7 @@ export let excludeHashes = false
 // This is done through the function `historifySetup()`, which is passed a
 // navigatePostprocessor function called every time the browser location changes.
 
-export function historifySetup (_navigatePostprocessor = null, _excludeHashes = false) {
-  navigatePostprocessor = _navigatePostprocessor
+export function historifySetup (_excludeHashes = false) {
   excludeHashes = _excludeHashes
 
   window.addEventListener('popstate', e => popStateCallback(window.location, e))
@@ -107,6 +105,4 @@ async function popStateCallback (location, e) {
     const where = history.lastIndexOf(path)
     if (where !== -1) history = history.slice(0, where + 1)
   }
-
-  if (navigatePostprocessor) await navigatePostprocessor(path, e)
 }
