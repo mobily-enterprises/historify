@@ -90,6 +90,10 @@ export function getHistory () {
 // If the event is not artificial, then the module will make sure that the
 // artificial history is properly in sync with the browser's history, by
 // truncating the artificial history to the latest matching entry.
+//
+// NOTE: this can happen regardless, since the last occurrence after an artificial
+// pushState will be the current page. However, the 'artificial' property will
+// allow for some optimisation
 
 async function popStateCallback (location, e) {
   const path = decodeURIComponent(location.pathname) + (excludeHashes ? '' : location.hash)
