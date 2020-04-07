@@ -99,7 +99,8 @@ async function popStateCallback (location, e) {
   if (!e || !e.state || !e.state.noHistory) history.push(path)
 
   /* For PURE browser popstate event (different to the artificial ones emitted with */
-  /* status set as { artificial: true }, reset the artificial history to this page */
+  /* status set as { artificial: true }, reset the artificial history to
+  /* the last occurrence of this page */
   if (e && e.type === 'popstate' && (!e.state || !e.state.artificial)) {
   /* if (e && e.type === 'popstate' && e.state && !e.state.artificial) { */
     const where = history.lastIndexOf(path)
