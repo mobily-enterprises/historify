@@ -1,6 +1,6 @@
 {
   "name": "historify",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Browser istory management for single page applications",
   "main": "historify.js",
   "directories": {
