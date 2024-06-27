@@ -12,6 +12,7 @@
 
 export let history = []
 export let excludeHashes = false
+export let backFrom = ''
 
 // In order for historify to work, it needs to be set up and it needs to listen
 // to popstate events (which will indicate a change of path).
@@ -41,6 +42,7 @@ function emitArtificialPopstate (state) {
 // `popstate` event.
 
 export function go (path, state = {}) {
+  backFrom = ''
   window.history.pushState(state, '', path)
   emitArtificialPopstate(state)
 }
@@ -52,6 +54,7 @@ export function go (path, state = {}) {
 // property `noHistory` set to `true`, which will prevent the module from
 // adding the entry in the history
 export function teleport (path, state = {}) {
+  backFrom = ''
   history[history.length - 1] = path
   state = { ...state, noHistory: true }
   window.history.replaceState(state, '', path)
@@ -65,6 +68,7 @@ export function teleport (path, state = {}) {
 // `history.back()` will emit a real one
 export function back (state = {}) {
   if (history.length > 1) {
+    backFrom = history[history.length -1 ]
     history.pop()
     window.history.back()
   }
@@ -90,21 +94,17 @@ export function getHistory () {
 // If the event is not artificial, then the module will make sure that the
 // artificial history is properly in sync with the browser's history, by
 // truncating the artificial history to the latest matching entry.
-//
-// NOTE: this can happen regardless, since the last occurrence after an artificial
-// pushState will be the current page. However, the 'artificial' property will
-// allow for some optimisation
 
 async function popStateCallback (location, e) {
   const path = decodeURIComponent(location.pathname) + (excludeHashes ? '' : location.hash)
+  backFrom = ''
 
   /* Push the new page in the artificial history */
   /* (unless noHistory was in the popstate state) */
   if (!e || !e.state || !e.state.noHistory) history.push(path)
 
   /* For PURE browser popstate event (different to the artificial ones emitted with */
-  /* status set as { artificial: true }, reset the artificial history to
-  /* the last occurrence of this page */
+  /* status set as { artificial: true }, reset the artificial history to this page */
   if (e && e.type === 'popstate' && (!e.state || !e.state.artificial)) {
   /* if (e && e.type === 'popstate' && e.state && !e.state.artificial) { */
     const where = history.lastIndexOf(path)
